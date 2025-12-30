@@ -31,9 +31,9 @@ It allows laboratory staff to:
 
 ---
 
-## ⚡ Key Features (v1.2)
+## ⚡ Key Features (v1.3)
+* **🧠 Smart Import Logic:** The system intelligently detects input files (`dostawa.csv` takes priority over `dostawa.txt`) and automatically adjusts to the delimiter used (commas `,` or semicolons `;`), making it compatible with both standard text files and regional Excel exports.
 * **💾 Persistent Storage (SQLite3):** Data is stored in a local `magazyn.db` file.
-* **🚚 Bulk Import (Batch Processing):** The system can parse external `dostawa.txt` files and insert multiple records into the database instantly.
 * **🔍 Auto-Expiry Detection:** Automatically queries the database for items where `expiration_date < today`.
 * **🛠️ Full CRUD Functionality:** Create, Read, Delete, and Batch Insert.
 
@@ -58,17 +58,24 @@ It allows laboratory staff to:
     * `[2]` **Add New Reagent** (Ręcznie)
     * `[3]` **Check Expiry Dates** (Sprawdź terminy)
     * `[4]` **Remove Reagent** (Zużycie)
-    * `[5]` **Import Delivery** (Import z pliku `dostawa.txt`)
+    * `[5]` **Import Delivery** (Auto-Detect CSV/TXT)
     * `[6]` **Exit**
 
-### 📂 File Structure for Import
-To use the Bulk Import feature, create a file named `dostawa.txt` with the following format (Name, Date, Quantity):
+## 📂 Supported Import Formats
+To use the **Smart Import** feature (Option 5), place one of the following files in the project folder:
+
+**Option A: Standard CSV/TXT (Comma Separated)**
+*Filename: `dostawa.txt` or `dostawa.csv`*
 ```text
 Magnesium R1,2025-12-31,5
 Calcium Arsenazo,2024-06-30,2
-Albumin BCG,2026-01-01,10
 ```
----
+**Option B: Regional/Excel CSV (Semicolon Separated)**
+*Filename: `dostawa.csv` (Priority File)*
+```text
+Sodium;2025-05-20;20
+Potassium;2024-12-12;15
+```
 ## 👨‍🔬 About the Author
 
 **Mateusz Jakubowski**
