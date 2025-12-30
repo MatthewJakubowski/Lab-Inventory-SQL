@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![AI Assisted](https://img.shields.io/badge/AI_Co--Pilot-Google_Gemini-4285F4?style=for-the-badge&logo=google-gemini&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Educational_Demo-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-v1.2_Active-success?style=for-the-badge)
 
 > **Inventory Management System for Clinical Laboratories.**
 > Solves the problem of expired reagents using a persistent SQLite database.
@@ -17,37 +17,32 @@
 ## 🤖 AI & Learning Transparency
 **This project is part of my transition from Medical Analysis to Software Engineering (#FromPipetteToPython).**
 
-The database architecture and SQL query logic were designed with the mentorship of **Google Gemini**. I focused on understanding **CRUD operations** (Create, Read, Update, Delete) and implementing them in a clean, functional CLI application.
+The database architecture and SQL query logic were designed with the mentorship of **Google Gemini**. I focused on understanding **CRUD operations** and **File Parsing** (importing data from external text files).
 
 ---
 
 ## 📋 Overview
-Managing reagent lots and expiration dates in a busy laboratory is often done manually or in Excel, leading to waste and errors. **Smart Reagent Manager** is a Python-based tool that replaces spreadsheets with a structured **Relational Database (SQL)**.
+Managing reagent lots and expiration dates in a busy laboratory is often done manually. **Smart Reagent Manager** is a Python-based tool that replaces spreadsheets with a structured **Relational Database (SQL)**.
 
 It allows laboratory staff to:
-* **Track** current inventory levels.
+* **Track** inventory levels.
 * **Monitor** expiration dates automatically.
-* **Remove** used or expired kits from the system.
-
-This project demonstrates my ability to integrate Python with **SQLite**, perform **CRUD operations**, and handle date logic.
+* **Import** bulk deliveries from electronic invoices (simulated via `.txt` files).
 
 ---
 
-## ⚡ Key Features
-* **💾 Persistent Storage (SQLite3):** Data is stored in a local `magazyn.db` file, ensuring inventory persists between sessions (unlike RAM-based variables).
-* **🔍 Auto-Expiry Detection:** Automatically queries the database for items where `expiration_date < today` and triggers an alarm 🚨.
-* **🛠️ Full CRUD Functionality:**
-    * **Create:** Add new reagent lots (`INSERT`).
-    * **Read:** View full inventory status (`SELECT`).
-    * **Delete:** Remove used/expired reagents (`DELETE`).
-* **🛡️ Input Validation:** Prevents crashes by validating numerical inputs (e.g., quantity, ID).
+## ⚡ Key Features (v1.2)
+* **💾 Persistent Storage (SQLite3):** Data is stored in a local `magazyn.db` file.
+* **🚚 Bulk Import (Batch Processing):** The system can parse external `dostawa.txt` files and insert multiple records into the database instantly.
+* **🔍 Auto-Expiry Detection:** Automatically queries the database for items where `expiration_date < today`.
+* **🛠️ Full CRUD Functionality:** Create, Read, Delete, and Batch Insert.
 
 ---
 
 ## 🚀 How to Run
 
 ### Prerequisites
-* Python 3.x (Standard library, no `pip install` required).
+* Python 3.x (Standard library).
 
 ### Usage
 1.  **Clone the repository:**
@@ -60,13 +55,20 @@ This project demonstrates my ability to integrate Python with **SQLite**, perfor
     ```
 3.  **Navigate the Menu:**
     * `[1]` **View Inventory** (Pokaż stan magazynu)
-    * `[2]` **Add New Reagent** (Dodaj nowy odczynnik)
-    * `[3]` **Check Expiry Dates** (Sprawdź terminy ważności)
-    * `[4]` **Remove Reagent** (Usuń odczynnik / Zużycie)
-    * `[5]` **Exit** (Wyjście)
+    * `[2]` **Add New Reagent** (Ręcznie)
+    * `[3]` **Check Expiry Dates** (Sprawdź terminy)
+    * `[4]` **Remove Reagent** (Zużycie)
+    * `[5]` **Import Delivery** (Import z pliku `dostawa.txt`)
+    * `[6]` **Exit**
 
+### 📂 File Structure for Import
+To use the Bulk Import feature, create a file named `dostawa.txt` with the following format (Name, Date, Quantity):
+```text
+Magnesium R1,2025-12-31,5
+Calcium Arsenazo,2024-06-30,2
+Albumin BCG,2026-01-01,10
+```
 ---
-
 ## 👨‍🔬 About the Author
 
 **Mateusz Jakubowski**
