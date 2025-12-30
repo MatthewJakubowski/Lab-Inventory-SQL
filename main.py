@@ -1,16 +1,14 @@
 import sqlite3
 import datetime
 import sys
+import os  # <--- NOWOŚĆ: Do sprawdzania czy plik istnieje
 
 # --- KONFIGURACJA BAZY DANYCH ---
 DB_NAME = "magazyn.db"
 
 def polacz_z_baza():
-    """Tworzy połączenie z plikiem bazy danych SQLite."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    
-    # Tworzymy tabelę, jeśli jeszcze nie istnieje
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS odczynniki (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +20,7 @@ def polacz_z_baza():
     conn.commit()
     return conn
 
-# --- FUNKCJE LOGICZNE (CRUD + IMPORT) ---
+# --- FUNKCJE LOGICZNE ---
 
 def dodaj_odczynnik(conn):
     print("\n➕ DODAWANIE ODCZYNNIKA (RĘCZNE)")
@@ -50,7 +48,6 @@ def pokaz_magazyn(conn):
     print("-" * 50)
     
     for wiersz in wyniki:
-        # wiersz to (id, nazwa, data, ilosc)
         print(f"{wiersz[0]:<4} | {wiersz[1]:<20} | {wiersz[2]:<12} | {wiersz[3]}")
 
 def sprawdz_terminy(conn):
@@ -58,7 +55,6 @@ def sprawdz_terminy(conn):
     dzisiaj = datetime.date.today().strftime("%Y-%m-%d")
     
     cursor = conn.cursor()
-    # SQL: Znajdź daty mniejsze niż dzisiaj
     cursor.execute("SELECT * FROM odczynniki WHERE data_waznosci < ?", (dzisiaj,))
     przeterminowane = cursor.fetchall()
     
@@ -90,50 +86,69 @@ def usun_odczynnik(conn):
     print(f"✅ Odczynnik o ID {id_do_usuniecia} został usunięty.")
 
 def import_dostawy(conn):
-    print("\n🚚 IMPORTOWANIE DOSTAWY Z PLIKU...")
-    nazwa_pliku = "dostawa.txt"
+    print("\n🚚 INTELIGENTNY IMPORT DOSTAWY...")
     
+    # 1. SPRAWDZANIE JAKI PLIK ISTNIEJE
+    if os.path.exists("dostawa.csv"):
+        nazwa_pliku = "dostawa.csv"
+        print("📂 Wykryto plik: dostawa.csv")
+    elif os.path.exists("dostawa.txt"):
+        nazwa_pliku = "dostawa.txt"
+        print("📂 Wykryto plik: dostawa.txt")
+    else:
+        print("❌ Błąd: Nie znaleziono pliku 'dostawa.csv' ani 'dostawa.txt'!")
+        return
+
     try:
-        with open(nazwa_pliku, "r") as plik:
+        with open(nazwa_pliku, "r", encoding='utf-8') as plik:
             linie = plik.readlines()
             
         cursor = conn.cursor()
         licznik = 0
         
         for linia in linie:
-            dane = linia.strip().split(",") 
-            # Oczekujemy formatu: Nazwa,Data,Ilość
-            if len(dane) == 3:
-                nazwa = dane[0]
-                data = dane[1]
-                ilosc = int(dane[2])
-                
-                cursor.execute("INSERT INTO odczynniki (nazwa, data_waznosci, ilosc) VALUES (?, ?, ?)", 
-                               (nazwa, data, ilosc))
-                licznik += 1
-                print(f"   ➕ Wczytano: {nazwa}")
+            linia = linia.strip() # Usuń spacje/entery z końców
+            if not linia: continue # Pomiń puste linie
+            
+            # 2. WYKRYWANIE SEPARATORA (Przecinek vs Średnik)
+            if ";" in linia:
+                dane = linia.split(";") # Tryb Polski Excel
             else:
-                print(f"   ⚠️ Pominięto błędną linię: {linia.strip()}")
+                dane = linia.split(",") # Tryb Standardowy
+            
+            # Walidacja danych
+            if len(dane) == 3:
+                nazwa = dane[0].strip()
+                data = dane[1].strip()
+                try:
+                    ilosc = int(dane[2].strip())
+                    
+                    cursor.execute("INSERT INTO odczynniki (nazwa, data_waznosci, ilosc) VALUES (?, ?, ?)", 
+                                   (nazwa, data, ilosc))
+                    licznik += 1
+                    print(f"   ➕ Wczytano: {nazwa}")
+                except ValueError:
+                    print(f"   ⚠️ Błąd ilości w linii: {linia}")
+            else:
+                print(f"   ⚠️ Zły format linii: {linia}")
                 
         conn.commit()
-        print(f"✅ Sukces! Dodano {licznik} nowych pozycji do magazynu.")
+        print(f"✅ Sukces! Dodano {licznik} nowych pozycji.")
         
-    except FileNotFoundError:
-        print(f"❌ Błąd: Nie znaleziono pliku '{nazwa_pliku}' w folderze projektu!")
-    except ValueError:
-        print("❌ Błąd: W pliku są błędne dane liczbowe!")
+    except Exception as e:
+        print(f"❌ Wystąpił niespodziewany błąd: {e}")
 
 # --- MENU GŁÓWNE ---
 def main():
     conn = polacz_z_baza()
     
     while True:
-        print("\n=== 🧪 SMART REAGENT MANAGER v1.2 ===")
+        print("\n=== 🧪 SMART REAGENT MANAGER v1.3 ===") # Wersja 1.3
         print("1. 📦 Pokaż stan magazynu")
-        print("2. ➕ Dodaj nowy odczynnik (Ręcznie)")
+        print("2. ➕ Dodaj nowy odczynnik")
         print("3. ⏳ Sprawdź terminy ważności")
         print("4. 🗑️ Usuń odczynnik (Zużycie)")
-        print("5. 🚚 Importuj dostawę (z pliku dostawa.txt)")
+        print("5. 🚚 Importuj dostawę (Auto-Detect CSV/TXT)")
         print("6. 🚪 Wyjście")
         
         wybor = input("WYBIERZ OPCJĘ (1-6): ")
