@@ -22,10 +22,10 @@ def polacz_z_baza():
     conn.commit()
     return conn
 
-# --- FUNKCJE LOGICZNE (CRUD) ---
+# --- FUNKCJE LOGICZNE (CRUD + IMPORT) ---
 
 def dodaj_odczynnik(conn):
-    print("\n➕ DODAWANIE ODCZYNNIKA")
+    print("\n➕ DODAWANIE ODCZYNNIKA (RĘCZNE)")
     nazwa = input("Podaj nazwę (np. Glukoza R1): ")
     data = input("Data ważności (RRRR-MM-DD): ")
     try:
@@ -50,6 +50,7 @@ def pokaz_magazyn(conn):
     print("-" * 50)
     
     for wiersz in wyniki:
+        # wiersz to (id, nazwa, data, ilosc)
         print(f"{wiersz[0]:<4} | {wiersz[1]:<20} | {wiersz[2]:<12} | {wiersz[3]}")
 
 def sprawdz_terminy(conn):
@@ -57,6 +58,7 @@ def sprawdz_terminy(conn):
     dzisiaj = datetime.date.today().strftime("%Y-%m-%d")
     
     cursor = conn.cursor()
+    # SQL: Znajdź daty mniejsze niż dzisiaj
     cursor.execute("SELECT * FROM odczynniki WHERE data_waznosci < ?", (dzisiaj,))
     przeterminowane = cursor.fetchall()
     
@@ -69,7 +71,6 @@ def sprawdz_terminy(conn):
 
 def usun_odczynnik(conn):
     print("\n🗑️ USUWANIE ODCZYNNIKA")
-    # Najpierw pokazujemy listę, żeby użytkownik widział ID
     pokaz_magazyn(conn)
     
     try:
@@ -79,30 +80,63 @@ def usun_odczynnik(conn):
         return
 
     cursor = conn.cursor()
-    # Sprawdźmy czy takie ID istnieje
     cursor.execute("SELECT * FROM odczynniki WHERE id=?", (id_do_usuniecia,))
     if not cursor.fetchone():
         print("❌ Nie ma takiego ID w bazie!")
         return
 
-    # Kasowanie
     cursor.execute("DELETE FROM odczynniki WHERE id=?", (id_do_usuniecia,))
     conn.commit()
     print(f"✅ Odczynnik o ID {id_do_usuniecia} został usunięty.")
+
+def import_dostawy(conn):
+    print("\n🚚 IMPORTOWANIE DOSTAWY Z PLIKU...")
+    nazwa_pliku = "dostawa.txt"
+    
+    try:
+        with open(nazwa_pliku, "r") as plik:
+            linie = plik.readlines()
+            
+        cursor = conn.cursor()
+        licznik = 0
+        
+        for linia in linie:
+            dane = linia.strip().split(",") 
+            # Oczekujemy formatu: Nazwa,Data,Ilość
+            if len(dane) == 3:
+                nazwa = dane[0]
+                data = dane[1]
+                ilosc = int(dane[2])
+                
+                cursor.execute("INSERT INTO odczynniki (nazwa, data_waznosci, ilosc) VALUES (?, ?, ?)", 
+                               (nazwa, data, ilosc))
+                licznik += 1
+                print(f"   ➕ Wczytano: {nazwa}")
+            else:
+                print(f"   ⚠️ Pominięto błędną linię: {linia.strip()}")
+                
+        conn.commit()
+        print(f"✅ Sukces! Dodano {licznik} nowych pozycji do magazynu.")
+        
+    except FileNotFoundError:
+        print(f"❌ Błąd: Nie znaleziono pliku '{nazwa_pliku}' w folderze projektu!")
+    except ValueError:
+        print("❌ Błąd: W pliku są błędne dane liczbowe!")
 
 # --- MENU GŁÓWNE ---
 def main():
     conn = polacz_z_baza()
     
     while True:
-        print("\n=== 🧪 SMART REAGENT MANAGER v1.1 ===")
+        print("\n=== 🧪 SMART REAGENT MANAGER v1.2 ===")
         print("1. 📦 Pokaż stan magazynu")
-        print("2. ➕ Dodaj nowy odczynnik")
+        print("2. ➕ Dodaj nowy odczynnik (Ręcznie)")
         print("3. ⏳ Sprawdź terminy ważności")
         print("4. 🗑️ Usuń odczynnik (Zużycie)")
-        print("5. 🚪 Wyjście")
+        print("5. 🚚 Importuj dostawę (z pliku dostawa.txt)")
+        print("6. 🚪 Wyjście")
         
-        wybor = input("WYBIERZ OPCJĘ (1-5): ")
+        wybor = input("WYBIERZ OPCJĘ (1-6): ")
         
         if wybor == '1':
             pokaz_magazyn(conn)
@@ -113,6 +147,8 @@ def main():
         elif wybor == '4':
             usun_odczynnik(conn)
         elif wybor == '5':
+            import_dostawy(conn)
+        elif wybor == '6':
             print("Zamykam system...")
             conn.close()
             sys.exit()
